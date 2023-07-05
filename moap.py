@@ -2,8 +2,8 @@
 def main():
     # Define command-line arguments and help messages
     parser = argparse.ArgumentParser(prog='nginx_log_parser', description='Nginx Log Parser')
-    parser.add_argument('--time', type=float, help='Specify the amount of time to check through the logs (e.g., 1 for the last hour, 0.15 for the last 15 minutes)')
-    parser.add_argument('--domain', type=str, help='Specify the domain to search')
+    parser.add_argument('--time', type=float, help='Specify the amount of time to check through the logs')
+    parser.add_argument('--domain', type=str, required=True, help='Specify the domain to search')
     parser.add_argument('--rotated', type=int, help='Specify the number of rotated logs to check')
     parser.add_argument('--url', action='store_true', help='Search for top 5 URLs and corresponding IP addresses')
     parser.add_argument('--ip', action='store_true', help='Search for top 5 IP addresses and corresponding URLs')
@@ -11,44 +11,41 @@ def main():
     parser.add_argument('--bots', action='store_true', help='Include only bot traffic')
     args = parser.parse_args()
 
-    # Print help if no arguments are provided
-    if len(vars(args)) == 0:
-        parser.print_help()
-        return
+    # Check if domain is specified
+    if not args.domain:
+        parser.error('The --domain flag is required.')
 
-    # Check the provided flags and execute the corresponding logic
+    # Check if either --time or --timeframe is specified
+    if not args.time and not args.timeframe:
+        parser.error('Warning: --time/timeframe not specified. Please specify either a time or timeframe you wish to search. Use --help for usage.')
+
+    # Check if both --time and --timeframe are specified
+    if args.time and args.timeframe:
+        parser.error('Error: Both --time and --timeframe flags cannot be specified together.')
+
+    # Process the time and timeframe flags
     if args.time:
-        # Process the time flag
         # Implement your logic here
         print(f"Checking logs for the last {args.time}...")
 
-    if args.domain:
-        # Process the domain flag
+    if args.timeframe:
         # Implement your logic here
-        print(f"Searching logs for the domain: {args.domain}...")
+        print(f"Searching logs within the timeframe: {args.timeframe}...")
 
+    # Process the other optional flags
     if args.rotated:
-        # Process the rotated flag
         # Implement your logic here
         print(f"Checking rotated logs for the domain: {args.domain} - {args.rotated}...")
 
     if args.url:
-        # Process the URL flag
         # Implement your logic here
         print("Searching for top 5 URLs and corresponding IP addresses...")
 
     if args.ip:
-        # Process the IP flag
         # Implement your logic here
         print("Searching for top 5 IP addresses and corresponding URLs...")
 
-    if args.timeframe:
-        # Process the timeframe flag
-        # Implement your logic here
-        print(f"Searching logs within the timeframe: {args.timeframe}...")
-
     if args.bots:
-        # Process the bots flag
         # Implement your logic here
         print("Including only bot traffic...")
 
