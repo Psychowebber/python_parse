@@ -2,6 +2,7 @@ import re
 import datetime
 import argparse
 from collections import Counter
+import ipaddress
 
 # Regular expression pattern to extract URLs
 url_pattern = re.compile(r'\"([^\"]*)\"')
@@ -38,35 +39,34 @@ def filter_log_entries(file_path, start_time, end_time):
     return filtered_entries
 
 # Function to check if an IP address matches the specified pattern
-def is_matching_ip(ip_address, pattern):
-    ip_parts = ip_address.split('.')
-    pattern_parts = pattern.split('.')
-    for i in range(len(ip_parts)):
-        if pattern_parts[i] != '*' and pattern_parts[i] != ip_parts[i]:
-            return False
-    return True
+def is_matching_ip(ip_address):
+    try:
+        ip_obj = ipaddress.ip_address(ip_address)
+        return ip_obj.version == 4 or ip_obj.version == 6
+    except ValueError:
+        return False
 
 # Create the argument parser
 parser = argparse.ArgumentParser(description='Log Analyzer')
-parser.add_argument('--domain', type=str, help='Domain name')
-parser.add_argument('--time', type=float, help='Time value')
+parser.add_argument('--domain', type=str, default="{domain}", help='Domain name')
+parser.add_argument('--time', type=float, default={time}, help='Time value')
 args = parser.parse_args()
 
 # Prompt the user to enter the domain if not provided as a flag
-if args.domain:
-    domain = args.domain
-else:
+if args.domain == "{domain}":
     domain = input("Enter the domain: ")
+else:
+    domain = args.domain
 
 # Construct the log file path
 log_file = "/home/jetrails/{domain}/logs/{domain}-ssl-access_log".format(domain=domain)
 
 # Prompt the user to enter the value if not provided as a flag
-if args.time:
-    value = args.time
-else:
+if args.time == {time}:
     value_str = input("Value Format: 1 = 1 hour ago, 1.15 = 1 hour 15 minutes ago\nEnter the value: ")
     value = float(value_str)
+else:
+    value = args.time
 
 # Calculate the start and end times based on the value provided
 current_time = datetime.datetime.now()
@@ -79,21 +79,17 @@ url_hits = parse_log_file(log_file)
 # Sort URLs by hit count in descending order
 sorted_urls = sorted(url_hits.items(), key=lambda x: x[1], reverse=True)
 
-# Display the top 5 IP addresses and their total hit counts
+# Display the top 5 IP addresses by hit number
 print("Top 5 IP Addresses by Hit Number:")
 top_ip_addresses = Counter()
-for i, (url, count) in enumerate(sorted_urls[:5]):
+for i, (url, count) in enumerate(sorted_urls):
     # Assuming the IP address is the first column in the log file
     ip_address = url.split()[0]
-    if not is_matching_ip(ip_address, "69.27.43.*"):
+    if is_matching_ip(ip_address) and not is_matching_ip(ip_address, "69.27.43.*"):
         top_ip_addresses[ip_address] += count
-        print("IP: {}, Total Hits: {}".format(ip_address, count))
 
-print("---------------------------------")
-
-# Display the top 5 URLs for each IP address
-for ip, total_hits in top_ip_addresses.most_common(5):
-    print("IP: {}, Total Hits: {}".format(ip, total_hits))
+for ip, count in top_ip_addresses.most_common(5):
+    print("IP: {}, Total Hits: {}".format(ip, count))
     ip_url_hits = Counter()
     filtered_entries = filter_log_entries(log_file, start_time, end_time)
     for line in filtered_entries:
@@ -102,10 +98,12 @@ for ip, total_hits in top_ip_addresses.most_common(5):
             continue
         entry_ip = log_parts[0]
         if entry_ip == ip:
-            match = url_pattern.search(line)
-            if match:
-                url = match.group(1)
-                ip_url_hits[url] += 1
+            request_method = log_parts[5][1:]
+            if request_method not in ("GET", "HEAD"):
+                match = url_pattern.search(line)
+                if match:
+                    url = match.group(1)
+                    ip_url_hits[url] += 1
 
     top_urls = ip_url_hits.most_common(5)
     for url, count in top_urls:
