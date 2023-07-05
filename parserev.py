@@ -49,7 +49,7 @@ def is_matching_ip(ip_address):
 # Create the argument parser
 parser = argparse.ArgumentParser(description='Log Analyzer')
 parser.add_argument('--domain', action='store_true', help='Trigger to input the domain name')
-parser.add_argument('--time', type=float, default=1, help='Time value')
+parser.add_argument('--time', type=float, help='Time value')
 args = parser.parse_args()
 
 # Prompt the user to enter the domain if --domain flag is triggered
