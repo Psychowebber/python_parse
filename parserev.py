@@ -49,7 +49,7 @@ def is_matching_ip(ip_address):
 # Create the argument parser
 parser = argparse.ArgumentParser(description='Log Analyzer')
 parser.add_argument('--domain', action='store_true', help='Trigger to input the domain name')
-parser.add_argument('--time', type=float, help='Time value')
+parser.add_argument('--time', type=float, default=1, help='Time value')
 args = parser.parse_args()
 
 # Prompt the user to enter the domain if --domain flag is triggered
@@ -87,8 +87,8 @@ for i, (url, count) in enumerate(sorted_urls):
     ip_address = url.split()[0]
     if is_matching_ip(ip_address) and not is_matching_ip(ip_address, "69.27.43.*"):
         top_ip_addresses[ip_address] += count
-    if i == 4:
-        break
+        if len(top_ip_addresses) >= 5:
+            break
 
 for ip, count in top_ip_addresses.most_common(5):
     print("IP: {}, Total Hits: {}".format(ip, count))
