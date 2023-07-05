@@ -1,5 +1,6 @@
 import re
 import datetime
+import argparse
 from collections import Counter
 
 # Regular expression pattern to extract URLs
@@ -45,12 +46,27 @@ def is_matching_ip(ip_address, pattern):
             return False
     return True
 
-# Prompt the user to enter the absolute location of the log file
-log_file = input("Enter the absolute location of the log file: ").strip()
+# Create the argument parser
+parser = argparse.ArgumentParser(description='Log Analyzer')
+parser.add_argument('--domain', type=str, help='Domain name')
+parser.add_argument('--time', type=float, help='Time value')
+args = parser.parse_args()
 
-# Prompt the user to enter the value in the format: 1 = 1 hour ago, 1.15 = 1 hour 15 minutes ago
-value_str = input("Value Format: 1 = 1 hour ago, 1.15 = 1 hour 15 minutes ago\nEnter the value: ")
-value = float(value_str)
+# Prompt the user to enter the domain if not provided as a flag
+if args.domain:
+    domain = args.domain
+else:
+    domain = input("Enter the domain: ")
+
+# Construct the log file path
+log_file = "/home/jetrails/{domain}/logs/{domain}-ssl-access_log".format(domain=domain)
+
+# Prompt the user to enter the value if not provided as a flag
+if args.time:
+    value = args.time
+else:
+    value_str = input("Value Format: 1 = 1 hour ago, 1.15 = 1 hour 15 minutes ago\nEnter the value: ")
+    value = float(value_str)
 
 # Calculate the start and end times based on the value provided
 current_time = datetime.datetime.now()
@@ -63,27 +79,27 @@ url_hits = parse_log_file(log_file)
 # Sort URLs by hit count in descending order
 sorted_urls = sorted(url_hits.items(), key=lambda x: x[1], reverse=True)
 
-# Display the top 5 IP addresses
-print("Top 5 IP Addresses:")
-
+# Display the top 5 IP addresses and their total hit counts
+print("Top 5 IP Addresses by Hit Number:")
 top_ip_addresses = Counter()
 for i, (url, count) in enumerate(sorted_urls[:5]):
     # Assuming the IP address is the first column in the log file
     ip_address = url.split()[0]
     if not is_matching_ip(ip_address, "69.27.43.*"):
         top_ip_addresses[ip_address] += count
-        print("IP: {}, Hits: {}".format(ip_address, count))
+        print("IP: {}, Total Hits: {}".format(ip_address, count))
 
 print("---------------------------------")
 
 # Display the top 5 URLs for each IP address
-for ip, ip_count in top_ip_addresses.most_common(5):
-    print("URLs for IP: {}, Total Hits: {}".format(ip, ip_count))
-
+for ip, total_hits in top_ip_addresses.most_common(5):
+    print("IP: {}, Total Hits: {}".format(ip, total_hits))
     ip_url_hits = Counter()
     filtered_entries = filter_log_entries(log_file, start_time, end_time)
     for line in filtered_entries:
         log_parts = line.split()
+        if len(log_parts) < 4:
+            continue
         entry_ip = log_parts[0]
         if entry_ip == ip:
             match = url_pattern.search(line)
@@ -92,7 +108,6 @@ for ip, ip_count in top_ip_addresses.most_common(5):
                 ip_url_hits[url] += 1
 
     top_urls = ip_url_hits.most_common(5)
-    print("Top 5 URLs:")
     for url, count in top_urls:
         print("URL: {}, Hits: {}".format(url, count))
 
