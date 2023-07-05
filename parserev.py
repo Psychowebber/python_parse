@@ -48,25 +48,25 @@ def is_matching_ip(ip_address):
 
 # Create the argument parser
 parser = argparse.ArgumentParser(description='Log Analyzer')
-parser.add_argument('--domain', type=str, default="{domain}", help='Domain name')
-parser.add_argument('--time', type=float, default={time}, help='Time value')
+parser.add_argument('--domain', action='store_true', help='Trigger to input the domain name')
+parser.add_argument('--time', type=float, help='Time value')
 args = parser.parse_args()
 
-# Prompt the user to enter the domain if not provided as a flag
-if args.domain == "{domain}":
+# Prompt the user to enter the domain if --domain flag is triggered
+if args.domain:
     domain = input("Enter the domain: ")
 else:
-    domain = args.domain
+    domain = "moodfabrics.com"
 
 # Construct the log file path
 log_file = "/home/jetrails/{domain}/logs/{domain}-ssl-access_log".format(domain=domain)
 
-# Prompt the user to enter the value if not provided as a flag
-if args.time == {time}:
+# Prompt the user to enter the value if --time flag is provided
+if args.time:
+    value = args.time
+else:
     value_str = input("Value Format: 1 = 1 hour ago, 1.15 = 1 hour 15 minutes ago\nEnter the value: ")
     value = float(value_str)
-else:
-    value = args.time
 
 # Calculate the start and end times based on the value provided
 current_time = datetime.datetime.now()
@@ -87,9 +87,12 @@ for i, (url, count) in enumerate(sorted_urls):
     ip_address = url.split()[0]
     if is_matching_ip(ip_address) and not is_matching_ip(ip_address, "69.27.43.*"):
         top_ip_addresses[ip_address] += count
+    if i == 4:
+        break
 
 for ip, count in top_ip_addresses.most_common(5):
     print("IP: {}, Total Hits: {}".format(ip, count))
+
     ip_url_hits = Counter()
     filtered_entries = filter_log_entries(log_file, start_time, end_time)
     for line in filtered_entries:
@@ -106,6 +109,7 @@ for ip, count in top_ip_addresses.most_common(5):
                     ip_url_hits[url] += 1
 
     top_urls = ip_url_hits.most_common(5)
+    print("Top 5 URLs and Their Hit Counts:")
     for url, count in top_urls:
         print("URL: {}, Hits: {}".format(url, count))
 
