@@ -11,6 +11,7 @@ def main():
     parser.add_argument('--ip', action='store_true', help='Search for top 5 IP addresses and corresponding URLs')
     parser.add_argument('--timeframe', type=str, help='Specify the time frame in 24-hour format (e.g., --timeframe=13:00-14:00)')
     parser.add_argument('--bots', action='store_true', help='Include only bot traffic')
+    parser.add_argument('--hitman', action='store_true', help='Get top 10 IP addresses with highest hit counts within the specified timeframe')
     args = parser.parse_args()
 
     # Check if domain is specified
@@ -30,9 +31,17 @@ def main():
         # Implement your logic here
         print(f"Checking logs for the last {args.time}...")
 
+        if args.hitman:
+            # Implement your logic to get top 10 IPs within the specified timeframe
+            print(f"Getting top 10 IP addresses with highest hit counts within the specified timeframe...")
+
     if args.timeframe:
         # Implement your logic here
         print(f"Searching logs within the timeframe: {args.timeframe}...")
+
+        if args.hitman:
+            # Implement your logic to get top 10 IPs within the specified timeframe
+            print(f"Getting top 10 IP addresses with highest hit counts within the specified timeframe...")
 
     # Process the other optional flags
     if args.rotated:
@@ -58,7 +67,7 @@ def main():
     # Example: Printing top 5 URLs and corresponding IP addresses
     top_urls = get_top_n_items(hit_counts, 5)
     for url in top_urls:
-        ips = filter_ips(url_ips[url], '69.27.47')
+        ips = filter_ips(url_ips[url],'69.27.47')
         ip_with_urls = [f"{ip} ({generate_abuse_check_url(ip)})" for ip in ips]
         print(f"URL: {url} | Hits: {hit_counts[url]} | IP Addresses: {', '.join(ip_with_urls)}")
 
