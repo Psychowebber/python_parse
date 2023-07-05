@@ -1,3 +1,5 @@
+import argparse
+
 # Main function to parse command-line arguments and execute the script
 def main():
     # Define command-line arguments and help messages
