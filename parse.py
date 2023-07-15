@@ -118,15 +118,15 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
         results_dict = json.loads(results)
 
         # Assign relevant info
-        abuseScore = results_dict['data']['abuseConfidenceScore']
-        countryName = results_dict['data']['countryName']
-        domain = results_dict['data']['domain']
-        hostnames = results_dict['data']['hostnames']
-        isTor = results_dict['data']['isTor']
-        isp = results_dict['data']['isp']
-        lastReport = results_dict['data']['lastReportedAt']
-        totalReports = results_dict['data']['totalReports']
-        usageType = results_dict['data']['usageType']
+        abuseScore = str(results_dict['data']['abuseConfidenceScore'])
+        countryName = str(results_dict['data']['countryName'])
+        domain = str(results_dict['data']['domain'])
+        hostnames = str(results_dict['data']['hostnames'])
+        isTor = str(results_dict['data']['isTor'])
+        isp = str(results_dict['data']['isp'])
+        lastReport = str(results_dict['data']['lastReportedAt'])
+        totalReports = str(results_dict['data']['totalReports'])
+        usageType = str(results_dict['data']['usageType'])
 
         # set associated text color for abuse score
         if abuseScore <= 33:
@@ -145,14 +145,14 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
         print("Country: " + countryName)
         print("ISP: " + isp)
         print("Usage Type: " + usageType)
-        print("Hostnames: " + str(hostnames))
+        print("Hostnames: " + hostnames)
         print("Domains: " + domain)
-        print("Is TOR? " + str(isTor))
+        print("Is TOR? " + isTor)
         print()
 
         print(colors.HEADER + "Abuse Info:" + colors.ENDC)
         print("Last Reported: " + lastReport)
-        print("Number of Reports: " + str(totalReports))
-        print(scoreColor + "Abuse Score: " + str(abuseScore) + colors.ENDC)
+        print("Number of Reports: " + totalReports)
+        print(scoreColor + "Abuse Score: " + abuseScore + colors.ENDC)
 
     print("---------------------------------")
