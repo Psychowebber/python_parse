@@ -1,7 +1,10 @@
-import re
-import datetime
-import argparse
-from collections import Counter
+import argparse # Used to parse arguments for script
+import credentials # NEED TO INSERT API KEY AS STRING IN CREDENTIALS.PY (apikey="KEY HERE")
+import datetime # Used to calculate location in log file to start
+import json # Used to process json object from abuseipdb api
+import re # Used to construct regex for URLs
+import subprocess # Used to run shell commands
+from collections import Counter # Used to count instance of IPs
 
 # Regular expression pattern to extract URLs
 url_pattern = re.compile(r'\"([^\"]*)\"')
@@ -98,5 +101,16 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
     print("Top 5 IP Addresses:")
     for ip, ip_count in top_ip_addresses:
         print("IP: {}, Hits: {} - https://www.abuseipdb.com/check/{}".format(ip, ip_count, ip))
+        
+        # Call Abuse IP DB API with script
+        apikey = credentials.apikey
+        # Contruct curl command for hitting API endpoint
+        shellCommand = '''curl -G https://api.abuseipdb.com/api/v2/check \
+                        --data-urlencode "ipAddress={ip}" \
+                        -d maxAgeInDays=90 \
+                        -d verbose \
+                        -H "Key: {apikey}" \
+                        -H "Accept: application/json"'''.format(ip=ip, apikey=apikey)
+        subprocess.call(shellCommand, shell=True)
 
     print("---------------------------------")
