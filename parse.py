@@ -118,7 +118,7 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
         results_dict = json.loads(results)
 
         # Assign relevant info
-        abuseScore = str(results_dict['data']['abuseConfidenceScore'])
+        abuseScore = results_dict['data']['abuseConfidenceScore']
         countryName = str(results_dict['data']['countryName'])
         domain = str(results_dict['data']['domain'])
         hostnames = str(results_dict['data']['hostnames'])
@@ -153,6 +153,6 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
         print(colors.HEADER + "Abuse Info:" + colors.ENDC)
         print("Last Reported: " + lastReport)
         print("Number of Reports: " + totalReports)
-        print(scoreColor + "Abuse Score: " + abuseScore + colors.ENDC)
+        print(scoreColor + "Abuse Score: " + str(abuseScore) + colors.ENDC)
 
     print("---------------------------------")
