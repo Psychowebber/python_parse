@@ -1,6 +1,6 @@
+import abuseipdb # Abuse IP DB integration broken into discrete file
 import argparse # Used to parse arguments for script
-import credentials # NEED TO INSERT API KEY AS STRING IN CREDENTIALS.PY (apikey="KEY HERE")
-import datetime # Used to calculate location in log file to start
+import datetime # Used to calculate location in log file to start parsing
 import json # Used to process json object from abuseipdb api
 import re # Used to construct regex for URLs
 import subprocess # Used to run shell commands
@@ -8,6 +8,18 @@ from collections import Counter # Used to count instance of IPs
 
 # Regular expression pattern to extract URLs
 url_pattern = re.compile(r'\"([^\"]*)\"')
+
+# Define text colors
+class colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 # Function to parse the log file and count hits per URL
 def parse_log_file(file_path):
@@ -100,17 +112,47 @@ for i, (url, count) in enumerate(sorted_urls[:5]):
     top_ip_addresses = ip_hits.most_common(5)
     print("Top 5 IP Addresses:")
     for ip, ip_count in top_ip_addresses:
-        print("IP: {}, Hits: {} - https://www.abuseipdb.com/check/{}".format(ip, ip_count, ip))
-        
-        # Call Abuse IP DB API with script
-        apikey = credentials.apikey
-        # Contruct curl command for hitting API endpoint
-        shellCommand = '''curl -G https://api.abuseipdb.com/api/v2/check \
-                        --data-urlencode "ipAddress={ip}" \
-                        -d maxAgeInDays=90 \
-                        -d verbose \
-                        -H "Key: {apikey}" \
-                        -H "Accept: application/json"'''.format(ip=ip, apikey=apikey)
-        subprocess.call(shellCommand, shell=True)
+
+        # Get results for IP
+        results = abuseipdb.ipCheck(ip)
+        results_dict = json.loads(results)
+
+        # Assign relevant info
+        abuseScore = results_dict['data']['abuseConfidenceScore']
+        countryName = results_dict['data']['countryName']
+        domain = results_dict['data']['domain']
+        hostnames = results_dict['data']['hostnames']
+        isTor = results_dict['data']['isTor']
+        isp = results_dict['data']['isp']
+        lastReport = results_dict['data']['lastReportedAt']
+        totalReports = results_dict['data']['totalReports']
+        usageType = results_dict['data']['usageType']
+
+        # set associated text color for abuse score
+        if abuseScore <= 33:
+            scoreColor = colors.OKGREEN
+        elif abuseScore <= 66 and abuseScore > 33:
+            scoreColor = colors.WARNING
+        else:
+            scoreColor = colors.FAIL
+
+        # Print report for IP
+        print()
+        print(colors.HEADER + "IP: {}, Hits: {} - https://www.abuseipdb.com/check/{}".format(ip, ip_count, ip) + colors.ENDC)
+        print()
+
+        print(colors.HEADER + "Host Info:" + colors.ENDC)
+        print("Country: " + countryName)
+        print("ISP: " + isp)
+        print("Usage Type: " + usageType)
+        print("Hostnames: " + str(hostnames))
+        print("Domains: " + domain)
+        print("Is TOR? " + str(isTor))
+        print()
+
+        print(colors.HEADER + "Abuse Info:" + colors.ENDC)
+        print("Last Reported: " + lastReport)
+        print("Number of Reports: " + str(totalReports))
+        print(scoreColor + "Abuse Score: " + str(abuseScore) + colors.ENDC)
 
     print("---------------------------------")
