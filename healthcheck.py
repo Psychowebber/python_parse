@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description="Show top processes by RAM and CPU 
 parser.add_argument("--cpu", action="store_true", help="Sort by CPU usage. Example: --cpu")
 parser.add_argument("--ram", action="store_true", help="Sort by RAM usage. Example: --ram")
 parser.add_argument("--limit", type=int, default=10, help="Limit of top processes to show. Example: --limit 5")
-parser.add_argument("--pname", help="Get usage for the specified process name.")
+parser.add_argument("--pname", nargs="+", help="Get usage for the specified process name(s).")
 parser.add_argument("--info", action="store_true", help="Show additional information about the script.")
 args = parser.parse_args()
 
@@ -26,7 +26,7 @@ if args.info:
     print("Use --cpu to sort by CPU usage.")
     print("Use --ram to sort by RAM usage.")
     print("Use --limit <n> to specify the number of processes to show.")
-    print("Use --pname <process_name> to get usage for the specified process name.")
+    print("Use --pname <process_name(s)> to get usage for the specified process name(s).")
     exit(0)
 
 # Create a dictionary to store the process information
@@ -87,16 +87,24 @@ print("-" * 85)
 
 # Filter processes based on process name if --pname flag is used
 if args.pname:
-    filtered_processes = {pid: info for pid, info in process_info.items() if args.pname in info[0]}
+    for pname in args.pname:
+        filtered_processes = {pid: info for pid, info in process_info.items() if pname in info[0]}
 
-    if not filtered_processes:
-        print(f"No processes found with the name '{args.pname}'.")
-        exit(0)
+        if not filtered_processes:
+            print(f"No processes found with the name '{pname}'.")
+            print("-" * 85)
+            continue
 
-    sorted_processes = sorted(filtered_processes.items(), key=sort_key, reverse=True)[:args.limit]
+        sorted_processes = sorted(filtered_processes.items(), key=sort_key, reverse=True)[:args.limit]
+
+        print(f"Usage for processes with name '{pname}':")
+        for pid, (process_name, ram_used, cpu_usage) in sorted_processes:
+            ram_percentage = (ram_used / total_ram) * 100
+            print("{:<7} | {:<20} | {:<15} | {:<15.2f} | {:.2f}%".format(pid, process_name, ram_used, cpu_usage, ram_percentage))
+        print("-" * 85)
 else:
     sorted_processes = sorted(process_info.items(), key=sort_key, reverse=True)[:args.limit]
 
-for pid, (process_name, ram_used, cpu_usage) in sorted_processes:
-    ram_percentage = (ram_used / total_ram) * 100
-    print("{:<7} | {:<20} | {:<15} | {:<15.2f} | {:.2f}%".format(pid, process_name, ram_used, cpu_usage, ram_percentage))
+    for pid, (process_name, ram_used, cpu_usage) in sorted_processes:
+        ram_percentage = (ram_used / total_ram) * 100
+        print("{:<7} | {:<20} | {:<15} | {:<15.2f} | {:.2f}%".format(pid, process_name, ram_used, cpu_usage, ram_percentage))
