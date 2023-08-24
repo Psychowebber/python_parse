@@ -16,9 +16,9 @@ parser = argparse.ArgumentParser(description="Show top processes by RAM and CPU 
 parser.add_argument("--cpu", action="store_true", help="Sort by CPU usage. Example: --cpu")
 parser.add_argument("--ram", action="store_true", help="Sort by RAM usage. Example: --ram")
 parser.add_argument("--limit", type=int, default=10, help="Limit of top processes to show. Example: --limit 5")
-parser.add_argument("--pname", nargs="+", help="Get usage for the specified process name(s).")
+parser.add_argument("--pname", help="Get usage for the specified process name(s), separated by |.")
 parser.add_argument("--info", action="store_true", help="Show additional information about the script.")
-args = parser.parse_args()
+args, _ = parser.parse_known_args()
 
 # If the --info flag is used, print some additional information and exit
 if args.info:
@@ -26,7 +26,7 @@ if args.info:
     print("Use --cpu to sort by CPU usage.")
     print("Use --ram to sort by RAM usage.")
     print("Use --limit <n> to specify the number of processes to show.")
-    print("Use --pname <process_name(s)> to get usage for the specified process name(s).")
+    print("Use --pname <process_name1|process_name2> to get usage for the specified process name(s).")
     exit(0)
 
 # Create a dictionary to store the process information
@@ -56,12 +56,11 @@ for pid in parent_pids:
             stat_data = stat_file.read().split()
             utime = int(stat_data[13])
             stime = int(stat_data[14])
-            cutime = int(stat_data[15])
-            cstime = int(stat_data[16])
-            total_time = utime + stime + cutime + cstime
+            starttime = int(stat_data[21])
+            total_time = utime + stime
             uptime_seconds = float(open("/proc/uptime").read().split()[0])
             uptime_clock_ticks = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-            seconds = uptime_seconds
+            seconds = uptime_seconds - (starttime / uptime_clock_ticks)
             cpu_usage = 100.0 * ((total_time / uptime_clock_ticks) / seconds)
     except (FileNotFoundError, IndexError, ZeroDivisionError, ValueError):
         cpu_usage = 0.0
@@ -85,10 +84,11 @@ print(header)
 print("{:<7} | {:<20} | {:<15} | {:<15} | {:<20}".format("PID", "Process Name", "RAM Used (KB)", "CPU Usage (%)", "% of Total RAM Used"))
 print("-" * 85)
 
-# Filter processes based on process name if --pname flag is used
+# Filter processes based on process names if --pname flag is used
 if args.pname:
-    for pname in args.pname:
-        filtered_processes = {pid: info for pid, info in process_info.items() if pname in info[0]}
+    process_names = args.pname.split("|")
+    for pname in process_names:
+        filtered_processes = {pid: info for pid, info in process_info.items() if pname.lower() in info[0].lower()}
 
         if not filtered_processes:
             print(f"No processes found with the name '{pname}'.")
