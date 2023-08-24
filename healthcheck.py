@@ -56,11 +56,12 @@ for pid in parent_pids:
             stat_data = stat_file.read().split()
             utime = int(stat_data[13])
             stime = int(stat_data[14])
-            starttime = int(stat_data[21])
-            total_time = utime + stime
+            cutime = int(stat_data[15])
+            cstime = int(stat_data[16])
+            total_time = utime + stime + cutime + cstime
             uptime_seconds = float(open("/proc/uptime").read().split()[0])
             uptime_clock_ticks = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-            seconds = uptime_seconds - (starttime / uptime_clock_ticks)
+            seconds = uptime_seconds
             cpu_usage = 100.0 * ((total_time / uptime_clock_ticks) / seconds)
     except (FileNotFoundError, IndexError, ZeroDivisionError, ValueError):
         cpu_usage = 0.0
